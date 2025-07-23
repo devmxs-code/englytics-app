@@ -442,8 +442,12 @@ export default function DictionaryApp() {
   const Header = () => (
     <header className="bg-white dark:bg-gray-800 shadow-md py-4 px-6">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-white flex items-center">
-            <img src="/gitbook.svg" alt="Logo" className="mr-2 w-6 h-6 filter invert" />
+        <h1 className={`text-2xl font-bold flex items-center ${window.innerWidth <= 768 ? 'text-black' : 'text-white'}`}>
+          <img 
+            src="/gitbook.svg" 
+            alt="Logo" 
+            className={`mr-2 w-6 h-6 ${window.innerWidth <= 768 ? '' : 'filter invert'}`} 
+          />
           <span>Englytics</span>
         </h1>
         <div className="flex items-center space-x-4">
