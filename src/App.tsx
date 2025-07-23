@@ -32,14 +32,14 @@ type RelatedWord = {
   score: number;
 };
 
-type Language = 'en' | 'pt' | 'es';
+type Language = 'en' | 'pt-BR';
 
 export default function DictionaryApp() {
   // Estados principais
   const [word, setWord] = useState('');
   const [definitions, setDefinitions] = useState<DictionaryResponse[]>([]);
   const [relatedWords, setRelatedWords] = useState<RelatedWord[]>([]);
-  const [translation, setTranslation] = useState('');
+  const [translation, setTranslation] = useState<{text: string, source: string} | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [history, setHistory] = useState<string[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -115,10 +115,13 @@ export default function DictionaryApp() {
   }, []);
 
   const fetchTranslation = useCallback(async (word: string) => {
-    if (language === 'en') return;
+    if (language === 'en') {
+      setTranslation(null);
+      return;
+    }
     
     try {
-      const targetLang = language === 'pt' ? 'pt' : 'es';
+      const targetLang = language === 'pt-BR' ? 'pt-BR' : 'es';
       const response = await fetch('https://libretranslate.de/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,9 +133,13 @@ export default function DictionaryApp() {
       });
       
       const data = await response.json();
-      setTranslation(data.translatedText);
+      setTranslation({
+        text: data.translatedText,
+        source: targetLang === 'pt-BR' ? 'Portuguese' : 'Spanish'
+      });
     } catch (err) {
       console.error('Translation failed:', err);
+      setTranslation(null);
     }
   }, [language]);
 
@@ -228,23 +235,20 @@ export default function DictionaryApp() {
         className={language === 'en' ? 'active' : ''}
         onClick={() => changeLanguage('en')}
         title="English"
+        aria-label="Switch to English"
       >
-        EN
+        <span className="flag-icon"></span>
+        <span>EN</span>
       </button>
       <button 
-        className={language === 'pt' ? 'active' : ''}
-        onClick={() => changeLanguage('pt')}
+        className={language === 'pt-BR' ? 'active' : ''}
+        onClick={() => changeLanguage('pt-BR')}
         title="Portuguese"
+        aria-label="Switch to Portuguese"
       >
-        PT
-      </button>
-      <button 
-        className={language === 'es' ? 'active' : ''}
-        onClick={() => changeLanguage('es')}
-        title="Spanish"
-      >
-        ES
-      </button>
+        <span className="flag-icon"></span>
+        <span>PT-BR</span>
+      </button>   
     </div>
   );
 
@@ -277,7 +281,7 @@ export default function DictionaryApp() {
           type="text"
           placeholder={language === 'en' 
             ? 'Search for a word...' 
-            : language === 'pt' 
+            : language === 'pt-BR' 
               ? 'Buscar uma palavra...' 
               : 'Buscar una palabra...'}
           defaultValue={word}
@@ -312,7 +316,10 @@ export default function DictionaryApp() {
       <section className="word-display">
         <div className="word-header">
           <div className="word-title">
-            <h2>{firstDef.word}</h2>
+            <h2>
+              {firstDef.word}
+              <span className="language-tag">English</span>
+            </h2>
             {phonetic?.text && (
               <span className="phonetic">/{phonetic.text}/</span>
             )}
@@ -351,12 +358,12 @@ export default function DictionaryApp() {
           </div>
         </div>
         
-        {translation && language !== 'en' && (
+        {translation && (
           <div className="translation-box">
-            <span className="translation-label">
-              {language === 'pt' ? 'Português:' : 'Español:'}
+            <span className="translation-text">
+              <span className="language-tag">{translation.source}</span>
+              {translation.text}
             </span>
-            <span className="translation-text">{translation}</span>
           </div>
         )}
         
@@ -381,13 +388,19 @@ export default function DictionaryApp() {
           <div key={i} className="definition-item">
             <div className="definition-meta">
               <span className="definition-number">{i + 1}.</span>
-              <p className="definition-text">{def.definition}</p>
+              <p className="definition-text">
+                <span className="language-tag">Definition</span>
+                {def.definition}
+              </p>
             </div>
             
             {def.example && (
               <div className="example">
                 <span className="example-label">Example:</span>
-                <p className="example-text">"{def.example}"</p>
+                <p className="example-text">
+                  <span className="language-tag">English</span>
+                  "{def.example}"
+                </p>
               </div>
             )}
           </div>
@@ -405,6 +418,7 @@ export default function DictionaryApp() {
                   className="relation-chip"
                   onClick={() => handleSearch(syn)}
                 >
+                  <span className="language-tag">English</span>
                   {syn}
                 </button>
               ))}
@@ -423,6 +437,7 @@ export default function DictionaryApp() {
                   className="relation-chip"
                   onClick={() => handleSearch(ant)}
                 >
+                  <span className="language-tag">English</span>
                   {ant}
                 </button>
               ))}
@@ -448,6 +463,7 @@ export default function DictionaryApp() {
             onClick={() => handleSearch(word.word)}
             aria-label={`Search for ${word.word}`}
           >
+            <span className="language-tag">English</span>
             {word.word}
           </button>
         ))}
@@ -458,7 +474,10 @@ export default function DictionaryApp() {
         <div className="graph-bars">
           {relatedWords.slice(0, 10).map((word, i) => (
             <div key={i} className="graph-bar-container">
-              <div className="graph-bar-label">{word.word}</div>
+              <div className="graph-bar-label">
+                <span className="language-tag">English</span>
+                {word.word}
+              </div>
               <div 
                 className="graph-bar" 
                 style={{ width: `${Math.min(100, word.score / 10)}%` }}
@@ -482,7 +501,10 @@ export default function DictionaryApp() {
             .map((def, i) => (
               <div key={i} className="example-card">
                 <div className="example-content">
-                  <p className="example-sentence">"{def.example}"</p>
+                  <p className="example-sentence">
+                    <span className="language-tag">English</span>
+                    "{def.example}"
+                  </p>
                   <p className="example-meaning">
                     <strong>Meaning:</strong> {def.definition}
                   </p>
@@ -522,6 +544,7 @@ export default function DictionaryApp() {
                 className={`history-item ${item === word ? 'active' : ''}`}
                 onClick={() => handleSearch(item)}
               >
+                <span className="language-tag">English</span>
                 {item}
               </button>
             </li>
@@ -559,6 +582,7 @@ export default function DictionaryApp() {
                 className={`favorite-item ${item === word ? 'active' : ''}`}
                 onClick={() => handleSearch(item)}
               >
+                <span className="language-tag">English</span>
                 {item}
               </button>
               <button 
@@ -656,11 +680,11 @@ export default function DictionaryApp() {
             </>
           ) : (
             <div className="welcome-message">
-              <h2>Welcome to Englytics Dictionary</h2>
+              <h2>Welcome to Englytics</h2>
               <p>
                 {language === 'en' 
                   ? 'Search for any English word to get detailed definitions, examples, and more.' 
-                  : language === 'pt' 
+                  : language === 'pt-BR' 
                     ? 'Pesquise qualquer palavra em inglês para obter definições detalhadas, exemplos e mais.' 
                     : 'Busque cualquier palabra en inglés para obtener definiciones detalladas, ejemplos y más.'}
               </p>
@@ -673,6 +697,7 @@ export default function DictionaryApp() {
                       className="example-word"
                       onClick={() => handleSearch(word)}
                     >
+                      <span className="language-tag">English</span>
                       {word}
                     </button>
                   ))}

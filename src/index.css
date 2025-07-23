@@ -912,6 +912,60 @@ body {
     font-size: var(--text-2xl);
   }
 }
+
+/* Adicione isso ao seu arquivo CSS existente */
+
+.language-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background-color: rgba(67, 97, 238, 0.1);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+[data-theme="dark"] .language-tag {
+  background-color: rgba(67, 97, 238, 0.2);
+}
+
+/* Ajustes para os componentes específicos */
+.word-title .language-tag,
+.translation-text .language-tag,
+.example-text .language-tag,
+.graph-bar-label .language-tag,
+.history-item .language-tag,
+.favorite-item .language-tag,
+.word-chip .language-tag,
+.example-word .language-tag {
+  margin-right: 0.3rem;
+  font-size: 0.6rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.word-title .language-tag {
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.translation-text .language-tag {
+  background-color: rgba(76, 201, 240, 0.1);
+  color: var(--color-accent);
+}
+
+[data-theme="dark"] .translation-text .language-tag {
+  background-color: rgba(76, 201, 240, 0.2);
+}
+
+.definition-text .language-tag {
+  margin-right: 0.4rem;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
