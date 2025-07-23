@@ -762,14 +762,18 @@ export default function DictionaryApp() {
               aria-label={`Search for ${word.word}`}
               title={`Score: ${word.score}`}
             >
-              <span className="text-xs mr-1 px-1 py-0.5 ${
-                strength === 0 ? 'bg-gray-200 dark:bg-gray-600' :
-                strength === 1 ? 'bg-indigo-200 dark:bg-indigo-800' :
-                strength === 2 ? 'bg-indigo-300 dark:bg-indigo-700' :
-                'bg-indigo-400 dark:bg-indigo-600'
-              } rounded">
-                EN
-              </span>
+              {(() => {
+                let bgClass = '';
+                if (strength === 0) bgClass = 'bg-gray-200 dark:bg-gray-600';
+                else if (strength === 1) bgClass = 'bg-indigo-200 dark:bg-indigo-800';
+                else if (strength === 2) bgClass = 'bg-indigo-300 dark:bg-indigo-700';
+                else bgClass = 'bg-indigo-400 dark:bg-indigo-600';
+                return (
+                  <span className={`text-xs mr-1 px-1 py-0.5 ${bgClass} rounded`}>
+                    EN
+                  </span>
+                );
+              })()}
               {word.word}
             </button>
           );
@@ -995,78 +999,78 @@ export default function DictionaryApp() {
   );
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>  
       <div className="dark:bg-gray-900 min-h-screen">
         <Header />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="lg:w-1/4">
-              <div className="sticky top-6 space-y-6">
-                <SearchForm />
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
+          <div className="flex flex-col-reverse lg:flex-row gap-6 md:gap-8">
+            {/* Side panels: mobile below, desktop left */}
+            <div className="w-full lg:w-1/4 flex-shrink-0">
+              <div className="sticky top-4 md:top-6 space-y-4 md:space-y-6">
+                {/* Painéis laterais sem barra de pesquisa */}
                 <HistoryPanel />
                 <FavoritesPanel />
               </div>
             </div>
-            
-            <main className="lg:w-3/4">
+            {/* Main content */}
+            <main className="w-full lg:w-3/4">
+              {/* Barra de pesquisa sempre no topo */}
+              <div className="mb-6">
+                <SearchForm />
+              </div>
               {loading && <LoadingIndicator />}
-              
               {error ? (
                 <ErrorDisplay />
               ) : definitions.length > 0 ? (
                 <>
                   <WordDisplay />
-                  
-                  <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+                  {/* Tabs: scrollable on mobile */}
+                  <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700 mb-4 md:mb-6 no-scrollbar">
                     <button
-                      className={`px-4 py-2 font-medium ${activeTab === 'definitions' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                      className={`flex-1 min-w-[120px] px-2 py-2 text-sm md:text-base font-medium whitespace-nowrap ${activeTab === 'definitions' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                       onClick={() => setActiveTab('definitions')}
                     >
                       {t.definitions}
                     </button>
                     <button
-                      className={`px-4 py-2 font-medium ${activeTab === 'thesaurus' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                      className={`flex-1 min-w-[120px] px-2 py-2 text-sm md:text-base font-medium whitespace-nowrap ${activeTab === 'thesaurus' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                       onClick={() => setActiveTab('thesaurus')}
                     >
                       {t.thesaurus}
                     </button>
                     <button
-                      className={`px-4 py-2 font-medium ${activeTab === 'examples' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                      className={`flex-1 min-w-[120px] px-2 py-2 text-sm md:text-base font-medium whitespace-nowrap ${activeTab === 'examples' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                       onClick={() => setActiveTab('examples')}
                     >
                       {t.examples}
                     </button>
                   </div>
-                  
                   <div className="tab-content">
                     {activeTab === 'definitions' && (
-                      <div className="space-y-6">
+                      <div className="space-y-4 md:space-y-6">
                         {definitions[0].meanings.map((meaning, i) => (
                           <MeaningCard key={i} meaning={meaning} wordIndex={0} />
                         ))}
                       </div>
                     )}
-                    
                     {activeTab === 'thesaurus' && <ThesaurusPanel />}
-                    
                     {activeTab === 'examples' && <ExamplesPanel />}
                   </div>
                 </>
               ) : (
-                <div className="text-center py-12">
-                  <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{t.welcome}</h2>
-                  <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">{t.welcomeDesc}</p>
+                <div className="text-center py-8 md:py-12">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3 md:mb-4">{t.welcome}</h2>
+                  <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-6 md:mb-8 max-w-2xl mx-auto">{t.welcomeDesc}</p>
                   <div className="max-w-md mx-auto">
-                    <p className="text-gray-700 dark:text-gray-400 mb-3">{t.tryWords}</p>
+                    <p className="text-gray-700 dark:text-gray-400 mb-2 md:mb-3">{t.tryWords}</p>
                     <div className="flex flex-wrap justify-center gap-2">
                       {['hello', 'beautiful', 'dictionary', 'learn', 'language'].map((word) => (
                         <button
                           key={word}
-                          className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:hover:bg-indigo-800 text-indigo-800 dark:text-indigo-200 rounded-full transition-colors"
+                          className="px-3 py-2 text-sm md:px-4 md:py-2 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:hover:bg-indigo-800 text-indigo-800 dark:text-indigo-200 rounded-full transition-colors"
                           onClick={() => handleSearch(word)}
                         >
-                          <span className="text-xs px-1.5 py-0.5 bg-indigo-200 dark:bg-indigo-800 rounded mr-1">
+                          <span className="text-xs px-1 py-0.5 md:px-1.5 md:py-0.5 bg-indigo-200 dark:bg-indigo-800 rounded mr-1">
                             EN
                           </span>
                           {word}
