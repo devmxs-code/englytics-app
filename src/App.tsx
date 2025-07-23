@@ -440,7 +440,7 @@ export default function DictionaryApp() {
 
   // Components
   const Header = () => (
-    <header className="bg-white dark:bg-gray-800 shadow-md py-4 px-6">
+    <header className="bg-white dark:bg-gray-800 shadow-md py-4 px-6 sticky top-0 z-50">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
         <h1 className={`text-2xl font-bold flex items-center ${window.innerWidth <= 768 ? 'text-black' : 'text-white'}`}>
           <img 
