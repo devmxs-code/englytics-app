@@ -1,46 +1,67 @@
-# Getting Started with Create React App
+# Englytics - Dicionário Avançado de Inglês
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Englytics é um dicionário de inglês avançado com recursos de tradução, pronúncia, rede semântica e muito mais. Desenvolvido com React e TypeScript, oferece uma experiência completa para aprendizes de inglês.
 
-## Available Scripts
+## Recursos Principais
 
-In the project directory, you can run:
+- 📖 Definições detalhadas com exemplos de uso
+- 🔍 Thesaurus com rede de palavras relacionadas
+- 🔊 Pronúncia em áudio (text-to-speech)
+- 🌐 Tradução automática para Português
+- 💾 Histórico de buscas e favoritos
+- 🌙 Modo claro/escuro
+- 📱 Design responsivo
 
-### `npm start`
+## Tecnologias Utilizadas
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- React 18
+- TypeScript
+- Tailwind CSS
+- API DictionaryAPI.dev
+- API Datamuse
+- API MyMemory Translation
+- Web Speech API
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Como Executar Localmente
 
-### `npm test`
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/englytics.git
+   cd englytics
+   ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
 
-### `npm run build`
+3. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm start
+   ```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+4. Acesse no navegador:
+   ```
+   http://localhost:3000
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Scripts Disponíveis
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `npm start`: Inicia o servidor de desenvolvimento
+- `npm build`: Cria a versão de produção
+- `npm test`: Executa os testes
+- `npm eject`: Ejetar configurações do Create React App
 
-### `npm run eject`
+## Configuração
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+O aplicativo armazena localmente no navegador:
+- Histórico de buscas
+- Palavras favoritas
+- Preferência de tema (claro/escuro)
+- Preferência de idioma (Inglês/Português)
+- Cache de traduções (válido por 24 horas)
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Licença
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
