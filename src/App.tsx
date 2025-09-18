@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Search, Volume2, MessageSquare, Star, Flag } from 'lucide-react';
 import './index.css';
 
 type DictionaryResponse = {
@@ -442,11 +443,11 @@ export default function DictionaryApp() {
   const Header = () => (
     <header className="bg-white dark:bg-gray-800 shadow-md py-4 px-6 sticky top-0 z-50">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
-        <h1 className={`text-2xl font-bold flex items-center ${window.innerWidth <= 768 ? 'text-black' : 'text-white'}`}> 
+        <h1 className="text-2xl font-bold flex items-center text-gray-900 dark:text-white"> 
           <img 
             src="/gitbook.svg" 
             alt="Logo" 
-            className={`mr-2 w-6 h-6 ${window.innerWidth <= 768 ? '' : 'filter invert'}`} 
+            className="mr-2 w-6 h-6 dark:filter dark:invert" 
           />
           <span>Englytics</span>
         </h1>
@@ -481,7 +482,7 @@ export default function DictionaryApp() {
         title="English"
         aria-label="Switch to English"
       >
-        <span className="mr-1">🇺🇸</span>
+        <Flag className="w-4 h-4 mr-1" />
         <span>EN</span>
       </button>
       <button 
@@ -490,7 +491,7 @@ export default function DictionaryApp() {
         title="Português"
         aria-label="Switch to Portuguese"
       >
-        <span className="mr-1">🇧🇷</span>
+        <Flag className="w-4 h-4 mr-1" />
         <span>PT-BR</span>
       </button>   
     </div>
@@ -525,7 +526,7 @@ export default function DictionaryApp() {
           {loading ? (
             <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
           ) : (
-            <span className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">🔍</span>
+            <Search className="w-5 h-5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
           )}
         </button>
       </div>
@@ -569,7 +570,9 @@ export default function DictionaryApp() {
                 ? t.removeFromFavorites
                 : t.addToFavorites}
             >
-              {favorites.includes(firstDef.word) ? '★' : '☆'}
+              {favorites.includes(firstDef.word) ? 
+                <Star className="w-5 h-5" fill="currentColor" /> : 
+                <Star className="w-5 h-5" />}
             </button>
             
             {audio && (
@@ -583,9 +586,9 @@ export default function DictionaryApp() {
                 {audioPlaying ? (
                   <span className="flex items-center">
                     <span className="w-4 h-4 mr-1 bg-indigo-500 rounded-full animate-pulse"></span>
-                    🔊
+                    <Volume2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   </span>
-                ) : '🔊'}
+                ) : <Volume2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
               </button>
             )}
             
@@ -599,9 +602,9 @@ export default function DictionaryApp() {
               {speaking ? (
                 <span className="flex items-center">
                   <span className="w-4 h-4 mr-1 bg-indigo-500 rounded-full animate-pulse"></span>
-                  🗣
+                  <MessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </span>
-              ) : '🗣'}
+              ) : <MessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
             </button>
           </div>
         </div>
