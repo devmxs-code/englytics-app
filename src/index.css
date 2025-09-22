@@ -14,3 +14,24 @@ code {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom CSS classes to replace inline styles */
+.progress-bar {
+  transition: width 0.3s ease;
+}
+
+.history-button {
+  color: #1f2937;
+}
+
+.dark .history-button {
+  color: #ffffff;
+}
+
+.favorites-button {
+  color: #1f2937;
+}
+
+.dark .favorites-button {
+  color: #ffffff;
+}
