@@ -25,7 +25,7 @@ code {
 }
 
 .dark .history-button {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .favorites-button {
@@ -33,5 +33,24 @@ code {
 }
 
 .dark .favorites-button {
-  color: #ffffff;
+  color: #ffffff !important;
+}
+
+/* Force white text in dark theme for history and favorites buttons */
+.dark aside ul li button {
+  color: #ffffff !important;
+}
+
+.dark aside button {
+  color: #ffffff !important;
+}
+
+/* Specific targeting for button text content */
+.dark .space-y-1 button {
+  color: #ffffff !important;
+}
+
+/* Override any Tailwind classes */
+.dark button.text-gray-800 {
+  color: #ffffff !important;
 }

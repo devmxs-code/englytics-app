@@ -1043,7 +1043,7 @@ export default function DictionaryApp() {
           {history.map((item, i) => (
             <li key={i}>
               <button 
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors history-button ${item === word ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                className={`w-full text-left px-3 py-2 rounded-md transition-colors history-button text-gray-800 dark:text-white ${item === word ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                 onClick={() => handleSearch(item)}
               >
                 <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded mr-2">
