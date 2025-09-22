@@ -7,6 +7,7 @@ const urlsToCache = [
 ];
 
 // Install event
+/* eslint-disable no-restricted-globals */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -61,7 +62,8 @@ self.addEventListener('activate', (event) => {
           if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
-        })
+          return null; // Return null for caches we want to keep
+        }).filter(Boolean) // Filter out null values
       );
     })
   );
