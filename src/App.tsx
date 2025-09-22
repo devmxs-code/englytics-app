@@ -60,6 +60,7 @@ export default function DictionaryApp() {
   const [translationCache, setTranslationCache] = useState<TranslationCache>({});
   const [definitionTranslations, setDefinitionTranslations] = useState<{[key: string]: string}>({});
   const [exampleTranslations, setExampleTranslations] = useState<{[key: string]: string}>({});
+  const [translationsEnabled, setTranslationsEnabled] = useState(false);
 
   // Texts
   const texts = {
@@ -150,12 +151,14 @@ export default function DictionaryApp() {
         const savedTheme = localStorage.getItem('dictionaryTheme');
         const savedLanguage = localStorage.getItem('dictionaryLanguage');
         const savedTranslations = localStorage.getItem('translationCache');
+        const savedTranslationsEnabled = localStorage.getItem('translationsEnabled');
 
         if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
         if (savedHistory) setHistory(JSON.parse(savedHistory));
         if (savedTheme) setTheme(savedTheme as 'light' | 'dark');
         if (savedLanguage) setLanguage(savedLanguage as Language);
         if (savedTranslations) setTranslationCache(JSON.parse(savedTranslations));
+        if (savedTranslationsEnabled) setTranslationsEnabled(JSON.parse(savedTranslationsEnabled));
       } catch (err) {
         console.error('Error loading persisted data:', err);
       }
@@ -174,9 +177,22 @@ export default function DictionaryApp() {
     }
   }, [theme]);
 
-  // Translation function
+  // Save translations enabled state
+  useEffect(() => {
+    try {
+      localStorage.setItem('translationsEnabled', JSON.stringify(translationsEnabled));
+      console.log('Translations enabled:', translationsEnabled);
+    } catch (err) {
+      console.error('Error saving translations enabled state:', err);
+    }
+  }, [translationsEnabled]);
+
+  // Translation function with retry logic and rate limiting
   const translateText = useCallback(async (text: string, cacheKey?: string): Promise<string> => {
-    if (language === 'en') return text;
+    if (language === 'en' || !translationsEnabled) {
+      console.log('Translation skipped - Language:', language, 'Translations enabled:', translationsEnabled);
+      return text;
+    }
     
     const key = cacheKey || text;
     const cached = translationCache[key];
@@ -186,55 +202,102 @@ export default function DictionaryApp() {
       return cached.text;
     }
 
-    try {
-      const response = await fetch('https://api.mymemory.translated.net/get', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
+    // Retry logic with exponential backoff
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 second
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Add delay between requests to avoid rate limiting
+        if (attempt > 0) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const url = new URL('https://api.mymemory.translated.net/get');
-        url.searchParams.append('q', text);
+        url.searchParams.append('q', encodeURIComponent(text));
         url.searchParams.append('langpair', 'en|pt-br');
+        url.searchParams.append('de', 'user@example.com'); // Add email for higher rate limit
         
-        const translationResponse = await fetch(url.toString());
-        const data = await translationResponse.json();
+        console.log(`Translation attempt ${attempt + 1} for: "${text.substring(0, 50)}..."`); 
         
-        if (data.responseData && data.responseData.translatedText) {
-          const translatedText = data.responseData.translatedText;
-          
-          // Update cache
-          const newCache = {
-            ...translationCache,
-            [key]: {
-              text: translatedText,
-              timestamp: Date.now()
-            }
-          };
-          
-          setTranslationCache(newCache);
-          
-          try {
-            localStorage.setItem('translationCache', JSON.stringify(newCache));
-          } catch (err) {
-            console.error('Error saving translation cache:', err);
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Englytics Dictionary App'
           }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
           
-          return translatedText;
+          if (data.responseData && data.responseData.translatedText) {
+            const translatedText = data.responseData.translatedText;
+            
+            // Update cache
+            const newCache = {
+              ...translationCache,
+              [key]: {
+                text: translatedText,
+                timestamp: Date.now()
+              }
+            };
+            
+            setTranslationCache(newCache);
+            
+            try {
+              localStorage.setItem('translationCache', JSON.stringify(newCache));
+            } catch (err) {
+              console.error('Error saving translation cache:', err);
+            }
+            
+            console.log(`Translation successful: "${translatedText.substring(0, 50)}..."`);
+            return translatedText;
+          } else {
+            console.warn('Invalid response format from MyMemory API:', data);
+          }
+        } else {
+          console.warn(`Translation API returned status ${response.status}: ${response.statusText}`);
+          if (response.status === 429) {
+            // Rate limited, wait longer before retry
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
+      } catch (err) {
+        console.error(`Translation attempt ${attempt + 1} failed:`, err);
+        
+        if (err instanceof Error) {
+          if (err.name === 'AbortError') {
+            console.warn('Translation request timed out');
+          } else if (err.message.includes('Failed to fetch')) {
+            console.warn('Network error during translation');
+          }
+        }
+        
+        // If this is the last attempt, break
+        if (attempt === maxRetries - 1) {
+          console.error('All translation attempts failed, returning original text');
+          break;
         }
       }
-    } catch (err) {
-      console.error('Translation failed:', err);
     }
     
-    return text; // Return original text if translation fails
+    return text; // Return original text if all attempts fail
   }, [language, translationCache]);
 
-  // Translate definitions and examples
+  // Translate definitions and examples with rate limiting
   const translateDefinitionsAndExamples = useCallback(async (definitions: DictionaryResponse[]) => {
-    if (language === 'en') return;
+    if (language === 'en' || !translationsEnabled) {
+      console.log('Definition/example translation skipped - Language:', language, 'Translations enabled:', translationsEnabled);
+      return;
+    }
 
     const definitionsToTranslate: {[key: string]: string} = {};
     const examplesToTranslate: {[key: string]: string} = {};
@@ -253,39 +316,68 @@ export default function DictionaryApp() {
       });
     });
 
-    // Translate definitions
-    const defPromises = Object.entries(definitionsToTranslate).map(async ([key, text]) => {
-      const translated = await translateText(text, key);
-      return [key, translated];
-    });
-
-    // Translate examples
-    const examplePromises = Object.entries(examplesToTranslate).map(async ([key, text]) => {
-      const translated = await translateText(text, key);
-      return [key, translated];
-    });
+    // Sequential translation with delays to avoid rate limiting
+    const translateSequentially = async (items: [string, string][], delay: number = 500) => {
+      const results: [string, string][] = [];
+      
+      for (let i = 0; i < items.length; i++) {
+        const [key, text] = items[i];
+        
+        try {
+          const translated = await translateText(text, key);
+          results.push([key, translated]);
+          
+          // Add delay between requests except for the last one
+          if (i < items.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        } catch (err) {
+          console.error(`Failed to translate ${key}:`, err);
+          results.push([key, text]); // Use original text as fallback
+        }
+      }
+      
+      return results;
+    };
 
     try {
-      const defResults = await Promise.all(defPromises);
-      const exampleResults = await Promise.all(examplePromises);
+      console.log(`Starting translation of ${Object.keys(definitionsToTranslate).length} definitions and ${Object.keys(examplesToTranslate).length} examples`);
+      
+      // Translate definitions first
+      const defResults = await translateSequentially(Object.entries(definitionsToTranslate), 600);
+      
+      // Then translate examples with a small delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const exampleResults = await translateSequentially(Object.entries(examplesToTranslate), 600);
 
       const newDefTranslations: {[key: string]: string} = {};
       const newExampleTranslations: {[key: string]: string} = {};
 
       defResults.forEach(([key, translation]) => {
-        newDefTranslations[key] = translation as string;
+        newDefTranslations[key] = translation;
       });
 
       exampleResults.forEach(([key, translation]) => {
-        newExampleTranslations[key] = translation as string;
+        newExampleTranslations[key] = translation;
       });
 
       setDefinitionTranslations(newDefTranslations);
       setExampleTranslations(newExampleTranslations);
+      
+      console.log('Translation completed successfully');
     } catch (err) {
       console.error('Error translating definitions:', err);
     }
-  }, [language, translateText]);
+  }, [language, translateText, translationsEnabled]);
+
+  // Save translations enabled state
+  useEffect(() => {
+    try {
+      localStorage.setItem('translationsEnabled', JSON.stringify(translationsEnabled));
+    } catch (err) {
+      console.error('Error saving translations enabled state:', err);
+    }
+  }, [translationsEnabled]);
 
   // API functions
   const fetchDefinitions = useCallback(async (word: string) => {
@@ -332,7 +424,8 @@ export default function DictionaryApp() {
   }, []);
 
   const fetchTranslation = useCallback(async (word: string) => {
-    if (language === 'en') {
+    if (language === 'en' || !translationsEnabled) {
+      console.log('Word translation skipped - Language:', language, 'Translations enabled:', translationsEnabled);
       setTranslation(null);
       return;
     }
@@ -347,7 +440,7 @@ export default function DictionaryApp() {
       console.error('Translation failed:', err);
       setTranslation(null);
     }
-  }, [language, translateText]);
+  }, [language, translateText, translationsEnabled]);
 
   // Handler functions
   const addToHistory = useCallback((word: string) => {
@@ -492,7 +585,17 @@ export default function DictionaryApp() {
         aria-label="Switch to Portuguese"
       >
         <Flag className="w-4 h-4 mr-1" />
-        <span>PT-BR</span>
+        <span>PT</span>
+      </button>
+      
+      {/* Translation Toggle */}
+      <button 
+        className={`px-3 py-1 rounded-md text-sm font-medium ${translationsEnabled ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'}`}
+        onClick={() => setTranslationsEnabled(!translationsEnabled)}
+        title={translationsEnabled ? 'Disable Translations' : 'Enable Translations'}
+        aria-label={translationsEnabled ? 'Disable Translations' : 'Enable Translations'}
+      >
+        <span className="text-xs">{translationsEnabled ? '🌐 ON' : '🌐 OFF'}</span>
       </button>   
     </div>
   );
@@ -608,6 +711,17 @@ export default function DictionaryApp() {
             </button>
           </div>
         </div>
+        
+        {/* Translation Notice */}
+        {language === 'pt-BR' && !translationsEnabled && (
+          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700">
+            <div className="flex items-center">
+              <span className="text-yellow-600 dark:text-yellow-300 text-sm">
+                ⚠️ Traduções desabilitadas temporariamente para evitar erros de API. Use o botão 🌐 para reativar.
+              </span>
+            </div>
+          </div>
+        )}
         
         {translation && (
           <div className="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900 rounded-lg">
@@ -820,7 +934,7 @@ export default function DictionaryApp() {
               </button>
               <div className="flex-1 mx-2 h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-indigo-500" 
+                  className="h-full bg-indigo-500 progress-bar" 
                   style={{ width: `${Math.min(100, word.score / 10)}%` }}
                 />
               </div>
@@ -929,7 +1043,7 @@ export default function DictionaryApp() {
           {history.map((item, i) => (
             <li key={i}>
               <button 
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors ${item === word ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                className={`w-full text-left px-3 py-2 rounded-md transition-colors history-button ${item === word ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                 onClick={() => handleSearch(item)}
               >
                 <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded mr-2">
@@ -973,7 +1087,7 @@ export default function DictionaryApp() {
           {favorites.map((item, i) => (
             <li key={i} className="group relative">
               <button 
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors ${item === word ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                className={`w-full text-left px-3 py-2 rounded-md transition-colors favorites-button ${item === word ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                 onClick={() => handleSearch(item)}
               >
                 <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded mr-2">
@@ -1020,6 +1134,16 @@ export default function DictionaryApp() {
       </button>
     </div>
   );
+
+  // Apply theme to document root
+  useEffect(() => {
+    const rootElement = document.documentElement;
+    if (theme === 'dark') {
+      rootElement.classList.add('dark');
+    } else {
+      rootElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>  
